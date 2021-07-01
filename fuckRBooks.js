@@ -1,0 +1,3 @@
+// bookmarklet: https://0x1d107.gitlab.io/bookmarklet/#document.getElementById('rBooks').contentWindow.PDFViewerApplication.findController._pdfDocument.mAllowPrint%20%3D%20true%3B%0Adocument.getElementById('rBooks').contentDocument.getElementById('print').click()%3B
+document.getElementById('rBooks').contentWindow.PDFViewerApplication.findController._pdfDocument.mAllowPrint = true;
+document.getElementById('rBooks').contentDocument.getElementById('print').click();
