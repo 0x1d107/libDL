@@ -1,8 +1,10 @@
 #!/bin/env python
 import requests,bs4,argparse,json
+import base64
 import pathlib
-from svglib.svglib import svg2rlg
-from reportlab.pdfgen import canvas
+from cairosvg import svg2pdf
+import subprocess
+from PyPDF2 import PdfFileMerger
 
 parser = argparse.ArgumentParser()
 
@@ -23,20 +25,29 @@ print(sign_in_data)
 r = session.post("https://e.lanbook.com/api/v2/signin", data=sign_in_data)
 print(r.request.headers)
 r.raise_for_status()
-print(r.json())
-resp = session.get(f"https://e.lanbook.com/reader/book/{BOOK}/").text
-soup = bs4.BeautifulSoup(resp,features='html5lib')
-page_urls = [img['data-src'] for img in soup.select('#pagesContainer .page>img')]
+resp = r.json()
+TOKEN=resp['jwt']['access_token']
+
+resp = session.get(f"https://reader.lanbook.com/api/v2/book/{BOOK}/documentFile?base64=1&lms=&jwtToken={TOKEN}").json()['data']
 bookdir_path = pathlib.Path(f'book{BOOK}')
 bookpdf_path = pathlib.Path(f'book{BOOK}.pdf')
 if not bookdir_path.exists():
     bookdir_path.mkdir()
-cnvs = canvas.Canvas(str(bookpdf_path))
-session.headers['Referer'] = f'https://e.lanbook.com/reader/book/{BOOK}/'
+#cnvs = canvas.Canvas(str(bookpdf_path))
+
+bookpdf_path.write_bytes(base64.b64decode(resp))
+
+"""
+svg_pages = []
+session.headers['Referer'] = f'https://reader.lanbook.com/reader/book/{BOOK}/'
 
 print("Downloading svg book pages")
 for i,url in enumerate(page_urls):
+    if not url.startswith('http://') and not url.startswith('https://'):
+        url = "https://reader.lanbook.com"+url
     page_path = bookdir_path/f'page-{i:04}.svg'
+    pdf_path = bookdir_path/f'page-{i:04}.pdf'
+    svg_pages.append((page_path,pdf_path))
     if not page_path.exists():
         print(f'Downloadading {url} \t {i+1} out of {len(page_urls)}')
         resp = session.get(url)
@@ -46,15 +57,4 @@ for i,url in enumerate(page_urls):
     else:
         pass
         print(f'Skipping {url} because {page_path} exists!')
-print("Stitching svg files into pdf")
-print("This will probably take a long time.\nThere will be error messages on the screen that IDK how to fix, so please ignore them.")
-for i in range(len(page_urls)):
-    page_path = bookdir_path/f'page-{i:04}.svg'
-    print(f"Drawing page {page_path} \t {i+1} out of {len(page_urls)}")
-    drawing = svg2rlg(page_path)
-    cnvs.setPageSize([drawing.width,drawing.height])
-    drawing.drawOn(cnvs,0,0)
-    cnvs.showPage()
-print(f'Saving pdf to {bookpdf_path}...')
-cnvs.save()
-    
+"""
