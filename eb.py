@@ -2,9 +2,7 @@
 import requests,bs4,argparse,json
 import base64
 import pathlib
-from cairosvg import svg2pdf
 import subprocess
-from PyPDF2 import PdfFileMerger
 
 parser = argparse.ArgumentParser()
 
@@ -37,24 +35,3 @@ if not bookdir_path.exists():
 
 bookpdf_path.write_bytes(base64.b64decode(resp))
 
-"""
-svg_pages = []
-session.headers['Referer'] = f'https://reader.lanbook.com/reader/book/{BOOK}/'
-
-print("Downloading svg book pages")
-for i,url in enumerate(page_urls):
-    if not url.startswith('http://') and not url.startswith('https://'):
-        url = "https://reader.lanbook.com"+url
-    page_path = bookdir_path/f'page-{i:04}.svg'
-    pdf_path = bookdir_path/f'page-{i:04}.pdf'
-    svg_pages.append((page_path,pdf_path))
-    if not page_path.exists():
-        print(f'Downloadading {url} \t {i+1} out of {len(page_urls)}')
-        resp = session.get(url)
-        resp.raise_for_status()
-        svg_content = resp.text
-        page_path.write_text(svg_content)
-    else:
-        pass
-        print(f'Skipping {url} because {page_path} exists!')
-"""
