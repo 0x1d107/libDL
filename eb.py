@@ -28,15 +28,33 @@ r.raise_for_status()
 resp = r.json()
 TOKEN=resp['jwt']['access_token']
 
-
-
+resp = session.get(f"https://reader.lanbook.com/api/v2/book/{BOOK}/documentFile?base64=1&lms=&jwtToken={TOKEN}").json()['data']
 bookdir_path = pathlib.Path(f'book{BOOK}')
 bookpdf_path = pathlib.Path(f'book{BOOK}.pdf')
 if not bookdir_path.exists():
     bookdir_path.mkdir()
 #cnvs = canvas.Canvas(str(bookpdf_path))
-file_url = f"https://reader.lanbook.com/api/v2/book/{BOOK}/documentFile?lms=&jwtToken={TOKEN}"
-with bookpdf_path.open('wb') as f:
-    for chunk in session.get(file_url).iter_content(1024*8):
-        f.write(chunk)
-    
+
+bookpdf_path.write_bytes(base64.b64decode(resp))
+
+"""
+svg_pages = []
+session.headers['Referer'] = f'https://reader.lanbook.com/reader/book/{BOOK}/'
+
+print("Downloading svg book pages")
+for i,url in enumerate(page_urls):
+    if not url.startswith('http://') and not url.startswith('https://'):
+        url = "https://reader.lanbook.com"+url
+    page_path = bookdir_path/f'page-{i:04}.svg'
+    pdf_path = bookdir_path/f'page-{i:04}.pdf'
+    svg_pages.append((page_path,pdf_path))
+    if not page_path.exists():
+        print(f'Downloadading {url} \t {i+1} out of {len(page_urls)}')
+        resp = session.get(url)
+        resp.raise_for_status()
+        svg_content = resp.text
+        page_path.write_text(svg_content)
+    else:
+        pass
+        print(f'Skipping {url} because {page_path} exists!')
+"""
